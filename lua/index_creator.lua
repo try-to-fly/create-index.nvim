@@ -87,7 +87,7 @@ local function create_index_file(path, files, is_module, is_ts)
 		elseif
 			dir_exists(file_path) and (file_exists(file_path .. "/index.js") or file_exists(file_path .. "/index.ts"))
 		then
-			table.insert(index_file_content, "export * from './" .. file .. (is_module and ".js" or "") .. "'")
+			table.insert(index_file_content, "export * from './" .. file .. (is_module and "/index.js" or "") .. "'")
 		end
 	end
 
