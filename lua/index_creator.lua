@@ -56,16 +56,18 @@ local function is_module_type(project_root)
 	return is_module
 end
 
-local function create_index_file(path, files, is_module)
-	local has_ts_files = false
-	for _, file in ipairs(files) do
-		if file:match("%.tsx?$") then
-			has_ts_files = true
-			break
-		end
-	end
+local function is_ts_project(project_root)
+	return file_exists(project_root .. "/tsconfig.json")
+end
 
-	local index_file_path = path .. (has_ts_files and "/index.ts" or "/index.js")
+local function to_camel_case(str)
+	return str:gsub("(%a)(%a*)", function(first, rest)
+		return first:upper() .. rest:lower()
+	end):gsub("[^%w]", "")
+end
+
+local function create_index_file(path, files, is_module, is_ts)
+	local index_file_path = path .. (is_ts and "/index.ts" or "/index.js")
 	local index_file_content = {}
 
 	for _, file in ipairs(files) do
@@ -75,6 +77,10 @@ local function create_index_file(path, files, is_module)
 				index_file_content,
 				"export * from './" .. file:gsub("%.%w+$", "") .. (is_module and ".js" or "") .. "'"
 			)
+		elseif file:match("%.vue$") then
+			local filename = file:gsub("%.vue$", "")
+			local camel_case_name = to_camel_case(filename)
+			table.insert(index_file_content, "export { default as " .. camel_case_name .. " } from './" .. file .. "'")
 		elseif
 			dir_exists(file_path) and (file_exists(file_path .. "/index.js") or file_exists(file_path .. "/index.ts"))
 		then
@@ -95,6 +101,7 @@ function M.create_index()
 			file:match("%.tsx?$")
 			or file:match("%.jsx?$")
 			or file:match("%.js$")
+			or file:match("%.vue$")
 			or dir_exists(target_folder .. "/" .. file)
 		then
 			table.insert(filtered_files, file)
@@ -111,7 +118,8 @@ function M.create_index()
 	end
 
 	local is_module = is_module_type(project_root)
-	create_index_file(target_folder, filtered_files, is_module)
+	local is_ts = is_ts_project(project_root)
+	create_index_file(target_folder, filtered_files, is_module, is_ts)
 end
 
 M.setup = function()
