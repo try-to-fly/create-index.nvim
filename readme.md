@@ -2,6 +2,8 @@
 
 This Neovim plugin automatically generates index files (`index.ts` or `index.js`) for your project directories. It scans the specified directory and creates an index file that exports all TypeScript, JavaScript, or JSX/TSX files in the directory.
 
+https://github.com/try-to-fly/create-index.nvim/assets/16008258/1a510998-25e3-414e-a08d-566992c2e9fe
+
 ## Features
 
 - Automatically detects the project root by locating the nearest `package.json` file.
