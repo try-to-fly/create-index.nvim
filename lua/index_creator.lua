@@ -73,10 +73,13 @@ local function create_index_file(path, files, is_module, is_ts)
 	for _, file in ipairs(files) do
 		local file_path = path .. "/" .. file
 		if file:match("%.tsx?$") or file:match("%.jsx?$") or file:match("%.js$") then
-			table.insert(
-				index_file_content,
-				"export * from './" .. file:gsub("%.%w+$", "") .. (is_module and ".js" or "") .. "'"
-			)
+			-- 忽略现有的 index 文件
+			if file ~= "index.ts" and file ~= "index.js" then
+				table.insert(
+					index_file_content,
+					"export * from './" .. file:gsub("%.%w+$", "") .. (is_module and ".js" or "") .. "'"
+				)
+			end
 		elseif file:match("%.vue$") then
 			local filename = file:gsub("%.vue$", "")
 			local camel_case_name = to_camel_case(filename)
@@ -104,7 +107,10 @@ function M.create_index()
 			or file:match("%.vue$")
 			or dir_exists(target_folder .. "/" .. file)
 		then
-			table.insert(filtered_files, file)
+			-- 忽略现有的 index 文件
+			if file ~= "index.ts" and file ~= "index.js" then
+				table.insert(filtered_files, file)
+			end
 		end
 	end
 
