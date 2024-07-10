@@ -66,8 +66,7 @@ local function to_camel_case(str)
 	end):gsub("[^%w]", "")
 end
 
-local function create_index_file(path, files, is_module, is_ts)
-	local index_file_path = path .. (is_ts and "/index.ts" or "/index.js")
+local function generate_exports_content(path, files, is_module, is_ts)
 	local index_file_content = {}
 
 	for _, file in ipairs(files) do
@@ -91,7 +90,74 @@ local function create_index_file(path, files, is_module, is_ts)
 		end
 	end
 
-	vim.fn.writefile(index_file_content, index_file_path)
+	return index_file_content
+end
+
+local function parse_treesitter(content, lang)
+	local parser = vim.treesitter.get_parser(0, lang)
+	local tree = parser:parse()[1]
+	return tree:root()
+end
+
+local function extract_exports(root, src)
+	local query = vim.treesitter.query.parse(
+		"javascript",
+		[[
+		(export_statement) @export
+		(export_clause) @export
+	]]
+	)
+
+	local exports = {}
+	for id, node, metadata in query:iter_captures(root, src, 0, -1) do
+		if query.captures[id] == "export" then
+			table.insert(exports, node)
+		end
+	end
+
+	return exports
+end
+
+local function update_index_file(path, new_exports, is_module, is_ts)
+	local index_file_path = path .. (is_ts and "/index.ts" or "/index.js")
+	local existing_content = {}
+
+	if file_exists(index_file_path) then
+		existing_content = vim.fn.readfile(index_file_path)
+	end
+
+	local ext = is_ts and "typescript" or "javascript"
+	local root = parse_treesitter(table.concat(existing_content, "\n"), ext)
+	local existing_exports = extract_exports(root, index_file_path)
+
+	local final_content = {}
+	local in_export_section = false
+
+	-- 复制现有内容
+	for _, line in ipairs(existing_content) do
+		table.insert(final_content, line)
+	end
+
+	-- 替换目录下的导出语句
+	for _, export_node in ipairs(existing_exports) do
+		local text = vim.treesitter.get_node_text(export_node, index_file_path)
+		if text:match("^export%s+%*%s+from%s+'./") then
+			in_export_section = true
+			for _, export_line in ipairs(new_exports) do
+				table.insert(final_content, export_line)
+			end
+		else
+			table.insert(final_content, text)
+		end
+	end
+
+	if not in_export_section then
+		for _, export_line in ipairs(new_exports) do
+			table.insert(final_content, export_line)
+		end
+	end
+
+	vim.fn.writefile(final_content, index_file_path)
 end
 
 function M.create_index()
@@ -125,7 +191,8 @@ function M.create_index()
 
 	local is_module = is_module_type(project_root)
 	local is_ts = is_ts_project(project_root)
-	create_index_file(target_folder, filtered_files, is_module, is_ts)
+	local new_exports = generate_exports_content(target_folder, filtered_files, is_module, is_ts)
+	update_index_file(target_folder, new_exports, is_module, is_ts)
 end
 
 M.setup = function()
