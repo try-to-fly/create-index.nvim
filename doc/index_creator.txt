@@ -1,0 +1,83 @@
+
+*index_creator.txt*  Index File Generator Plugin
+
+==============================================================================
+INDEX FILE GENERATOR PLUGIN                               *index-creator-plugin*
+
+This Neovim plugin automatically generates index files (`index.ts` or `index.js`) 
+for your project directories. It scans the specified directory and creates an 
+index file that exports all TypeScript, JavaScript, or JSX/TSX/Vue files in the 
+directory.
+
+==============================================================================
+CONTENTS                                                  *index-creator-contents*
+
+1. Features ........................................|index-creator-features|
+2. Installation ....................................|index-creator-installation|
+3. Usage ...........................................|index-creator-usage|
+4. Example .........................................|index-creator-example|
+5. License .........................................|index-creator-license|
+
+==============================================================================
+FEATURES                                                  *index-creator-features*
+
+- Automatically detects the project root by locating the nearest `package.json` file.
+- Supports `oil://` paths for directories.
+- Generates `index.ts` if any `.ts` or `.tsx` files are found, otherwise generates `index.js`.
+- If the `index.js` or `index.ts` file already exists, it will update only the export 
+  statements that correspond to the current directory, preserving any other export 
+  statements or custom logic in the file.
+
+==============================================================================
+INSTALLATION                                              *index-creator-installation*
+
+Use your preferred plugin manager to install the plugin. For example, using `Lazy`:
+
+>lua
+{
+    "try-to-fly/create-index.nvim",
+    config = function()
+        require("index_creator").setup()
+    end,
+}
+<
+
+==============================================================================
+USAGE                                                     *index-creator-usage*
+
+Run the following command in Neovim to create an index file in the current directory:
+
+:lua require('index_creator').create_index()
+
+==============================================================================
+EXAMPLE                                                   *index-creator-example*
+
+Given the following directory structure:
+
+>plaintext
+components/
+  │
+  ├── Card.tsx
+  ├── Filter.tsx
+  ├── Header.tsx
+<
+
+Running the command will create an `index.ts` file with the following content:
+
+>typescript
+export * from "./Card";
+export * from "./Filter";
+export * from "./Header";
+<
+
+If the `index.ts` file already exists and contains other export statements, those 
+statements will be preserved, and only the export statements for the current 
+directory will be updated.
+
+==============================================================================
+LICENSE                                                   *index-creator-license*
+
+This plugin is open-sourced software licensed under the [MIT license](LICENSE).
+
+==============================================================================
+vim:tw=78:ts=8:ft=help:norl:
