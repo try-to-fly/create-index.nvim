@@ -193,6 +193,8 @@ function M.create_index()
 	local is_ts = is_ts_project(project_root)
 	local new_exports = generate_exports_content(target_folder, filtered_files, is_module, is_ts)
 	update_index_file(target_folder, new_exports, is_module, is_ts)
+	-- 刷新当前active下的buffer
+	vim.cmd("e")
 end
 
 M.setup = function()
